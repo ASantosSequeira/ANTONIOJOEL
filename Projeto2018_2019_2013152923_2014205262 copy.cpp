@@ -15,8 +15,8 @@
 
 
 //--------------------------------- Definir cores
-#define BLUE     0.0, 0.0, 1.0, 1.0
-#define RED		 1.0, 0.0, 0.0, 1.0
+#define BLUE     0.0, 0.0, 1.0, 0.5
+#define RED		 1.0, 0.0, 0.0, 0.5
 #define YELLOW	 1.0, 1.0, 0.0, 1.0
 #define AMARELO  1.0, 1.0, 0.0, 1.0
 #define GREEN    0.0, 1.0, 0.0, 1.0
@@ -112,8 +112,8 @@ GLfloat qaWhite[] = {1.0, 1.0, 1.0, 1.0};
 bool globalOn = true;
 
 GLfloat r = 0.0f,g=0.0f,b= 0.0f,t=1.0f;
-GLfloat LightBritness = 50.0f;
-GLfloat incBrit = 5.0f;
+GLfloat LightBritness = 0.0f;
+GLfloat incBrit = 0.05f;
 GLfloat ambiente[] = {r,g,b,t};
 
 
@@ -349,7 +349,7 @@ void defineLights()
 void inicializa(void)
 {
 	criaDefineTexturas( );
-	glClearColor(DARKGREEN);		//������������������������������Apagar
+	glClearColor(BLACK);		//������������������������������Apagar
 	glEnable(GL_DEPTH_TEST);	//������������������������������Profundidade
 	glShadeModel(GL_SMOOTH);	//������������������������������Interpolacao de cores	
 
@@ -362,6 +362,9 @@ void inicializa(void)
     glEnableClientState(GL_NORMAL_ARRAY);
 	glColorPointer(3, GL_FLOAT, 0, cor);
     glEnableClientState(GL_COLOR_ARRAY);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	defineLights();
     glEnable(GL_LIGHTING);
@@ -1036,7 +1039,7 @@ void keyboard(unsigned char key, int x, int y){
         break;
     case '+':
         printf("+britness:%f\n",LightBritness);
-        if(LightBritness<100){
+        if(LightBritness<1){
 
             LightBritness+=incBrit;
             r = LightBritness;
@@ -1047,7 +1050,7 @@ void keyboard(unsigned char key, int x, int y){
         break;
     case '-':
         printf("-britness:%f\n",LightBritness);
-        if(LightBritness>=5){
+        if(LightBritness>0.00){
             LightBritness-=incBrit;
             r = LightBritness;
             b = LightBritness;
