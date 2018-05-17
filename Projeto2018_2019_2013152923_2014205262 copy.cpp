@@ -15,8 +15,8 @@
 
 
 //--------------------------------- Definir cores
-#define BLUE     0.0, 0.0, 1.0, 0.5
-#define RED		 1.0, 0.0, 0.0, 0.5
+#define BLUE     0.0, 0.0, 1.0, 1.0
+#define RED		 1.0, 0.0, 0.0, 1.0
 #define YELLOW	 1.0, 1.0, 0.0, 1.0
 #define AMARELO  1.0, 1.0, 0.0, 1.0
 #define GREEN    0.0, 1.0, 0.0, 1.0
@@ -79,7 +79,7 @@ GLint 	 corTabuleiro = 0;
 
 
 //------------Vari�veis Globais----------------//
-GLuint  texture[6];
+GLuint  texture[7];
 RgbImage imag;
 GLint incY = 1;
 
@@ -313,6 +313,20 @@ void criaDefineTexturas()
     imag.GetNumCols(),
         imag.GetNumRows(), 0, GL_RGB, GL_UNSIGNED_BYTE,
         imag.ImageData());
+
+    glGenTextures(1, &texture[6]);
+    glBindTexture(GL_TEXTURE_2D, texture[6]);
+    //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    imag.LoadBmpFile("nurburgring_nordschleife.bmp");
+    glTexImage2D(GL_TEXTURE_2D, 0, 3,
+    imag.GetNumCols(),
+        imag.GetNumRows(), 0, GL_RGB, GL_UNSIGNED_BYTE,
+        imag.ImageData());
 }
 
 
@@ -459,26 +473,23 @@ void drawPecas(){
 		glPushMatrix();
 			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
 	 		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			//Set Drawing Color - Will Remain this color until otherwise specified
 			glColor4f(BLUE); 
 			//Draw Circle
 			glBegin(GL_POLYGON);
-					//Change the 6 to 12 to increase the steps (number of drawn points) for a smoother circle
-					//Note that anything above 24 will have little affect on the circles appearance
-					//Play with the numbers till you find the result you are looking for
-					//Value 1.5 - Draws Triangle
-					//Value 2 - Draws Square
-					//Value 3 - Draws Hexagon
-					//Value 4 - Draws Octagon
-					//Value 5 - Draws Decagon
-					//Notice the correlation between the value and the number of sides
-					//The number of sides is always twice the value given this range
-				for(double i = 0; i < 2 * PI; i += PI / 12) //<-- Change this Value
+				for(double i = 0; i < 2 * PI; i += PI / 12)
 	 				glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
 			glEnd();
  
 		glPopMatrix();
 		//Draw Cilinder
+		glPushMatrix();	
+			glColor4f(BLUE);
+			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas1[k]-ladoTabuleiro/2);
+			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
+		glPopMatrix();
+
+
 		glPushMatrix();	
 			glColor4f(BLUE);
 			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
@@ -492,26 +503,22 @@ void drawPecas(){
 		glPushMatrix();
 			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
 	 		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			//Set Drawing Color - Will Remain this color until otherwise specified
 			glColor4f(RED); 
 			//Draw Circle
 			glBegin(GL_POLYGON);
-					//Change the 6 to 12 to increase the steps (number of drawn points) for a smoother circle
-					//Note that anything above 24 will have little affect on the circles appearance
-					//Play with the numbers till you find the result you are looking for
-					//Value 1.5 - Draws Triangle
-					//Value 2 - Draws Square
-					//Value 3 - Draws Hexagon
-					//Value 4 - Draws Octagon
-					//Value 5 - Draws Decagon
-					//Notice the correlation between the value and the number of sides
-					//The number of sides is always twice the value given this range
-				for(double i = 0; i < 2 * PI; i += PI / 12) //<-- Change this Value
+				for(double i = 0; i < 2 * PI; i += PI / 12)
 	 				glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
 			glEnd();
  
 		glPopMatrix();
 		//Draw Cilinder
+		glPushMatrix();	
+			glColor4f(RED);
+			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas2[k]-ladoTabuleiro/2);
+			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
+		glPopMatrix();
+
 		glPushMatrix();	
 			glColor4f(RED);
 			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
@@ -594,6 +601,25 @@ void drawSelecao(){
 			glPopMatrix();	
 		}
 	}
+}
+
+void drawPaint()
+{
+    glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glBindTexture(GL_TEXTURE_2D,texture[6]);
+    glColor3f(1.0f,1.0f,1.0f);
+    glRotatef(180,0,0,1);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0f,0.0f);glVertex3f(6.5,5.62,-14.99);
+        glTexCoord2f(1.0f,0.0f);glVertex3f(-6.5,5.62,-14.99);
+        glTexCoord2f(1.0f,1.0f);glVertex3f(-6.5,-5.62,-14.99);
+        glTexCoord2f(0.0f,1.0f);glVertex3f(6.5,-5.62,-14.99);
+    glEnd();
+    glPopMatrix();
+
+
 }
 
 void drawSala(){
@@ -772,6 +798,7 @@ void display(void){
 	drawPecas(); 	
 	drawSelecao();
 	drawSala();
+	drawPaint();
 	
   glutPostRedisplay();
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Actualizacao
