@@ -1,9 +1,6 @@
 //Código criado e adaptado por António Sequeira e Joel Fernandes (2013152923 e 2014205262), 
 //com base no código dado pelo Professor Jorge Henriques TP3_Cameras.cpp
 
-//https://stackoverflow.com/questions/327043/how-to-apply-texture-to-glutsolidcube
-//funcao quadrados tabuleiro
-
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +13,9 @@
 
 //--------------------------------- Definir cores
 #define BLUE     0.0, 0.0, 1.0, 1.0
+#define TRANSPARENTBLUE     0.0, 0.0, 1.0, 0.5
 #define RED		 1.0, 0.0, 0.0, 1.0
+#define TRANSPARENTRED    1.0, 0.0, 0.0, 0.5
 #define YELLOW	 1.0, 1.0, 0.0, 1.0
 #define AMARELO  1.0, 1.0, 0.0, 1.0
 #define GREEN    0.0, 1.0, 0.0, 1.0
@@ -55,6 +54,8 @@ int perspectiva = 0;
 static float ladoTabuleiro = 0.5f;
 
 static float radius = ladoTabuleiro/4;
+
+GLboolean transparency = false;
 
 
 
@@ -97,6 +98,7 @@ GLfloat IncreAngulo = 5.0f;
 GLfloat angMin = 5.0f;
 GLfloat angMax = 60.0f;
 GLfloat positionFoco[] = {xC/2, xC-2, -5.0f, 1.0f };
+GLfloat antiPositionFoco[] = {xC/2, -(xC-2), -5.0f, 1.0f };
 GLfloat direcaoFoco[] = {-1.0f,-1.0f,1.0f};
 GLfloat foco_ak = 1.0;
 GLfloat foco_al = 0.05f;
@@ -176,7 +178,7 @@ static GLfloat cor[]={
       1.0,  0.0, 1.0,	// 11 
 }; 
 
-static void drawBox(GLfloat size, GLenum type, GLint textura )
+static void drawBox(GLfloat size, GLenum type, GLint textura , GLint versao)
 {
   static GLfloat n[6][3] =
   {
@@ -207,22 +209,42 @@ static void drawBox(GLfloat size, GLenum type, GLint textura )
   v[1][2] = v[2][2] = v[5][2] = v[6][2] = size / 2;
 
   for (i = 5; i >= 0; i--) {
-  	glEnable(GL_TEXTURE_2D);
-  	if(textura == 1)
-    	glBindTexture(GL_TEXTURE_2D,texture[0]);
-    else
-    	glBindTexture(GL_TEXTURE_2D,texture[1]);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glPushMatrix();
-	    glBegin(type);
-		    glNormal3fv(&n[i][0]);
-		    glTexCoord2f(0.0f,0.0f);glVertex3fv(&v[faces[i][0]][0]);
-		    glTexCoord2f(1.0f,0.0f);glVertex3fv(&v[faces[i][1]][0]);
-		    glTexCoord2f(1.0f,1.0f);glVertex3fv(&v[faces[i][2]][0]);
-		    glTexCoord2f(0.0f,1.0f);glVertex3fv(&v[faces[i][3]][0]);
-	    glEnd();
-	glPopMatrix();
-    glDisable(GL_TEXTURE_2D);
+    if(versao == 1 && i == 1){
+    	glEnable(GL_TEXTURE_2D);
+    	if(textura == 1)
+      	glBindTexture(GL_TEXTURE_2D,texture[0]);
+      else
+      	glBindTexture(GL_TEXTURE_2D,texture[1]);
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      glPushMatrix();
+  	    glBegin(type);
+  		    glNormal3fv(&n[i][0]);
+  		    glTexCoord2f(0.0f,0.0f);glVertex3fv(&v[faces[i][0]][0]);
+  		    glTexCoord2f(1.0f,0.0f);glVertex3fv(&v[faces[i][1]][0]);
+  		    glTexCoord2f(1.0f,1.0f);glVertex3fv(&v[faces[i][2]][0]);
+  		    glTexCoord2f(0.0f,1.0f);glVertex3fv(&v[faces[i][3]][0]);
+  	    glEnd();
+  	  glPopMatrix();
+      glDisable(GL_TEXTURE_2D);
+    }
+    else if(versao == 0 && i != 1){
+      glEnable(GL_TEXTURE_2D);
+      if(textura == 1)
+        glBindTexture(GL_TEXTURE_2D,texture[0]);
+      else
+        glBindTexture(GL_TEXTURE_2D,texture[1]);
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      glPushMatrix();
+        glBegin(type);
+          glNormal3fv(&n[i][0]);
+          glTexCoord2f(0.0f,0.0f);glVertex3fv(&v[faces[i][0]][0]);
+          glTexCoord2f(1.0f,0.0f);glVertex3fv(&v[faces[i][1]][0]);
+          glTexCoord2f(1.0f,1.0f);glVertex3fv(&v[faces[i][2]][0]);
+          glTexCoord2f(0.0f,1.0f);glVertex3fv(&v[faces[i][3]][0]);
+        glEnd();
+      glPopMatrix();
+      glDisable(GL_TEXTURE_2D);
+    }
   }
 }
 
@@ -383,6 +405,7 @@ void inicializa(void)
 	defineLights();
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     
 	//Inicia Pe�as Player 1
     int linha=0;
@@ -462,69 +485,130 @@ void drawEixos()
 
 }	
 
-void drawPecas(){
+void drawPecas(GLint versao){
 	GLUquadricObj *quadratic;
 	quadratic = gluNewQuadric();
 	int linha=0;
 	float l = 0.5f;
 	//Pe�as Azuis
 	for(int k = 0; k < 12; k++){
-		//Draw Circle Top
-		glPushMatrix();
-			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
-	 		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			glColor4f(BLUE); 
-			//Draw Circle
-			glBegin(GL_POLYGON);
-				for(double i = 0; i < 2 * PI; i += PI / 12)
-	 				glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
-			glEnd();
- 
-		glPopMatrix();
-		//Draw Cilinder
-		glPushMatrix();	
-			glColor4f(BLUE);
-			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas1[k]-ladoTabuleiro/2);
-			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
-		glPopMatrix();
+    if(versao == 1){
+
+  		//Draw Circle Top
+  		glPushMatrix();
+  			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
+  	 		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+  			glColor4f(BLUE); 
+  			//Draw Circle
+  			glBegin(GL_POLYGON);
+  				for(double i = 0; i < 2 * PI; i += PI / 12)
+  	 				glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
+  			glEnd();
+   
+  		glPopMatrix();
+  		//Draw Cilinder
+  		glPushMatrix();	
+  			glColor4f(BLUE);
+  			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas1[k]-ladoTabuleiro/2);
+  			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+  			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
+  		glPopMatrix();
 
 
-		glPushMatrix();	
-			glColor4f(BLUE);
-			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
-			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/4,ladoTabuleiro,32,32);
-		glPopMatrix();
+  		glPushMatrix();	
+  			glColor4f(BLUE);
+  			glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
+  			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+  			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/4,ladoTabuleiro,32,32);
+  		glPopMatrix();
+    }
+    else if(versao == 0){
+      //Draw Circle Top
+      glPushMatrix();
+        glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        glColor4f(TRANSPARENTBLUE); 
+        //Draw Circle
+        glBegin(GL_POLYGON);
+          for(double i = 0; i < 2 * PI; i += PI / 12)
+            glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
+        glEnd();
+   
+      glPopMatrix();
+      //Draw Cilinder
+      glPushMatrix(); 
+        glColor4f(TRANSPARENTBLUE);
+        glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas1[k]-ladoTabuleiro/2);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
+      glPopMatrix();
+
+
+      glPushMatrix(); 
+        glColor4f(TRANSPARENTBLUE);
+        glTranslated(posicaoXPecas1[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas1[k]-ladoTabuleiro/2);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/4,ladoTabuleiro,32,32);
+      glPopMatrix();
+    }
 	}
 	//Pe�as Vermelhas
 	for(int k = 0; k < 12; k++){
 		//Draw Circle Top
-		glPushMatrix();
-			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
-	 		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			glColor4f(RED); 
-			//Draw Circle
-			glBegin(GL_POLYGON);
-				for(double i = 0; i < 2 * PI; i += PI / 12)
-	 				glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
-			glEnd();
- 
-		glPopMatrix();
-		//Draw Cilinder
-		glPushMatrix();	
-			glColor4f(RED);
-			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas2[k]-ladoTabuleiro/2);
-			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
-		glPopMatrix();
+    if(versao == 1){
+  		glPushMatrix();
+  			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
+  	 		glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+  			glColor4f(RED); 
+  			//Draw Circle
+  			glBegin(GL_POLYGON);
+  				for(double i = 0; i < 2 * PI; i += PI / 12)
+  	 				glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
+  			glEnd();
+   
+  		glPopMatrix();
+  		//Draw Cilinder
+  		glPushMatrix();	
+  			glColor4f(RED);
+  			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas2[k]-ladoTabuleiro/2);
+  			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+  			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
+  		glPopMatrix();
 
-		glPushMatrix();	
-			glColor4f(RED);
-			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
-			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/4,ladoTabuleiro,32,32);
-		glPopMatrix();
+  		glPushMatrix();	
+  			glColor4f(RED);
+  			glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
+  			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+  			gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/4,ladoTabuleiro,32,32);
+  		glPopMatrix();
+    }
+    else if(versao == 0){
+      glPushMatrix();
+        glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro+ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        glColor4f(TRANSPARENTRED); 
+        //Draw Circle
+        glBegin(GL_POLYGON);
+          for(double i = 0; i < 2 * PI; i += PI / 12)
+            glVertex3f(cos(i) * radius, sin(i) * radius, 0.0);
+        glEnd();
+   
+      glPopMatrix();
+      //Draw Cilinder
+      glPushMatrix(); 
+        glColor4f(TRANSPARENTRED);
+        glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro*1.125,posicaoYPecas2[k]-ladoTabuleiro/2);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/6,ladoTabuleiro/8,32,32);
+      glPopMatrix();
+
+      glPushMatrix(); 
+        glColor4f(TRANSPARENTRED);
+        glTranslated(posicaoXPecas2[k]+ladoTabuleiro/2,ladoTabuleiro/8,posicaoYPecas2[k]-ladoTabuleiro/2);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        gluCylinder(quadratic,ladoTabuleiro/4,ladoTabuleiro/4,ladoTabuleiro,32,32);
+      glPopMatrix();
+    }
 	}
 
 }
@@ -719,7 +803,7 @@ void drawSala(){
 }
 
 
-void drawScene(){
+void drawScene(GLint versao){
 	//==================================== Tabuleiro
 	int altura = 0;
 	int j = 0;
@@ -743,11 +827,12 @@ void drawScene(){
 			corTabuleiro = 0;
 		}
 		glPushMatrix();
-			glColor4f(WHITE);
+			//glColor4f(WHITE);
+      //glColor4f(1.0f,1.0f,1.0f,0.5f);
 			glTranslated(x+ladoTabuleiro/2,0,y-ladoTabuleiro/2);
-		    glScaled(ladoTabuleiro,ladoTabuleiro/4,ladoTabuleiro);
+		  glScaled(ladoTabuleiro,ladoTabuleiro/4,ladoTabuleiro);
 			//glutSolidCube(1);
-			drawBox(1,GL_QUADS,corTabuleiro);
+			drawBox(1,GL_QUADS,corTabuleiro,versao);
 		glPopMatrix();
 	}
 }
@@ -759,6 +844,15 @@ void display(void){
   	
 	//================================================================= APaga ecran/profundidade
 	 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+   //////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // - > REFLEXÂO STENCIL!
+   //////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////
 
 	
 	//================================================================= N�o modificar
@@ -793,12 +887,75 @@ void display(void){
     glEnable(GL_LIGHTING);
 
 	glEnable(GL_COLOR_MATERIAL);
-	drawEixos(); 
-	drawScene();
-	drawPecas(); 	
-	drawSelecao();
-	drawSala();
-	drawPaint();
+
+  
+
+
+  glPushMatrix();
+
+    /*Don't update color or depth.*/
+    glDisable(GL_DEPTH_TEST);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+    /* Draw 1 into the stencil buffer. */
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+    glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
+
+    drawScene(1);
+
+    /* Re-enable update of color and depth. */ 
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+
+    /* Now, only render where stencil is set to 1. */
+    glStencilFunc(GL_EQUAL, 1, 0xffffffff);  /* draw if stencil ==1 */
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    glPushMatrix();
+      glTranslatef(0,ladoTabuleiro/4,0);
+      glScalef(1.0, -1.0, 1.0);
+      glLightfv(GL_LIGHT0,GL_POSITION, antiPositionFoco);
+      glEnable(GL_NORMALIZE);
+      glCullFace(GL_FRONT);
+      drawPecas(1);
+      glDisable(GL_NORMALIZE);
+      glCullFace(GL_BACK);
+    glPopMatrix();
+
+    glLightfv(GL_LIGHT0,GL_POSITION, positionFoco);
+
+    glDisable(GL_STENCIL_TEST);
+
+    glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glColor4f(1.0f,1.0f,1.0f,0.5f);
+      drawScene(1);
+    glDisable(GL_BLEND);
+    
+    /*glFrontFace(GL_CW);  // Switch face orientation.
+      glColor4f(0.1, 0.1, 0.7, 1.0);
+      drawScene();
+    glFrontFace(GL_CCW);*/
+    drawScene(0);
+  glPopMatrix();
+  if(transparency == false)
+    drawPecas(1);
+
+
+  drawEixos();
+  drawSelecao();
+  drawSala();
+  drawPaint();
+
+  glPushMatrix();
+    if( transparency == true){
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      drawPecas(0); 
+      glDisable(GL_BLEND);
+    }
+  glPopMatrix();
 	
   glutPostRedisplay();
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Actualizacao
@@ -1058,9 +1215,6 @@ void keyboard(unsigned char key, int x, int y){
         else if(r == LightBritness){
             r = 0.0f;
             g = 0.0f;
-            
-            
-            
             b = 0.0f;
         }
         break;
@@ -1100,6 +1254,13 @@ void keyboard(unsigned char key, int x, int y){
     case 'n':
         anguloFoco-=IncreAngulo;
         break;
+    case 'b':
+    case 'B':
+        if(transparency == false)
+          transparency = true;
+        else if(transparency == true)
+          transparency = false;
+        break;
 	
 //--------------------------- Escape
 	case 27:
@@ -1136,7 +1297,7 @@ void teclasNotAscii(int key, int x, int y){
 int main(int argc, char** argv){
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
+	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize (wScreen, hScreen); 
 	glutInitWindowPosition (300, 100); 
 	glutCreateWindow ("{jh,pjmm}@dei.uc.pt|       |FaceVisivel:'f'|      |Observador:'SETAS'|        |Andar-'a/s'|        |Rodar -'e/d'| ");
